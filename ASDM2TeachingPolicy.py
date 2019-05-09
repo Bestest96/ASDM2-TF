@@ -27,7 +27,7 @@ def _hvp(grad, var, vec):
     return tf.gradients([g * tf.stop_gradient(v) for g, v in zip(grad, vec)], [v for v in var])
 
 
-def asdm2(loss, lr=1.0, t0=10.0, delta=0.0005, c=1.0e6, lambda_min=0.5, lambda_max=0.99, eps=1e-8,
+def asdm2(loss, lr=1, t0=10.0, delta=0.0005, c=1.0e6, lambda_min=0.5, lambda_max=0.99, eps=1e-8,
           use_nesterov=False, use_scaling=False, scaler_decay=0.999):
     variables = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES)
     t_v = tf.Variable(initial_value=tf.constant(1.0),
@@ -57,6 +57,18 @@ def asdm2(loss, lr=1.0, t0=10.0, delta=0.0005, c=1.0e6, lambda_min=0.5, lambda_m
     em2_v = tf.Variable(initial_value=tf.constant(0.0),
                         dtype='float',
                         trainable=False)
+    mu_v = tf.Variable(initial_value=tf.constant(0.99),
+                       dtype='float',
+                       trainable=False)
+    nu_v = tf.Variable(initial_value=-tf.log(tf.constant(1.0) - mu_v),
+                       dtype='float',
+                       trainable=False)
+    e_dq_dl2_v = tf.Variable(initial_value=tf.constant(0.0),
+                             dtype='float',
+                             trainable=False)
+    e_dbj_dmu2_v = tf.Variable(initial_value=tf.constant(0.0),
+                               dtype='float',
+                               trainable=False)
     scaler_v = [tf.Variable(initial_value=tf.ones(v.shape),
                             dtype='float',
                             trainable=False) for v in variables]
@@ -90,18 +102,6 @@ def asdm2(loss, lr=1.0, t0=10.0, delta=0.0005, c=1.0e6, lambda_min=0.5, lambda_m
     dbt_dmu_v = [tf.Variable(initial_value=tf.zeros(v.shape),
                              dtype='float',
                              trainable=False) for v in variables]
-    mu_v = tf.Variable(initial_value=tf.constant(0.99),
-                       dtype='float',
-                       trainable=False)
-    nu_v = tf.Variable(initial_value=-tf.log(tf.constant(1.0) - mu_v),
-                       dtype='float',
-                       trainable=False)
-    e_dq_dl2_v = tf.Variable(initial_value=tf.constant(0.0),
-                             dtype='float',
-                             trainable=False)
-    e_dbj_dmu2_v = tf.Variable(initial_value=tf.constant(0.0),
-                               dtype='float',
-                               trainable=False)
 
     grad_var_ns = tf.gradients(xs=variables, ys=loss)
     theta_phi_vars = [v - p if not use_nesterov else v - (p + lambda_v * m)
