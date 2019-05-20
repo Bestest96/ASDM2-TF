@@ -27,7 +27,7 @@ def _hvp(grad, var, vec):
     return tf.gradients([g * tf.stop_gradient(v) for g, v in zip(grad, vec)], [v for v in var])
 
 
-def asdm2(loss, lr=1.0, t0=10.0, delta=0.0005, c=1.0e8, lambda_min=0.5, lambda_max=0.99, eps=1e-8,
+def asdm2(loss, lr=1.0, t0=10.0, delta=0.0005, c=1.0e8, lambda_min=0.5, nu_min=0.5, nu_max=0.9999, eps=1e-8,
           use_nesterov=False, use_scaling=False, scaler_decay=0.999):
     variables = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES)
     t_v = tf.Variable(initial_value=tf.constant(1.0),
@@ -128,9 +128,9 @@ def asdm2(loss, lr=1.0, t0=10.0, delta=0.0005, c=1.0e8, lambda_min=0.5, lambda_m
     s_dg_db = [sgb * s for sgb, s in zip(s_dg_db_ns, scaler)]
     s_dg_dl = [sgl * s for sgl, s in zip(s_dg_dl_ns, scaler)]
 
-    dq_db = tf.add_n([tf.reduce_sum(gtp * (sbtb - smb))
+    dq_db = tf.add_n([tf.reduce_sum(gtp * (sbtb + smb))
                       for gtp, sbtb, smb in zip(grad_theta_phi, s_dbt_db_v, s_dm_db_v)])
-    dq_dl = tf.add_n([tf.reduce_sum(gtp * (sbtl - sml))
+    dq_dl = tf.add_n([tf.reduce_sum(gtp * (sbtl + sml))
                       for gtp, sbtl, sml in zip(grad_theta_phi, s_dbt_dl_v, s_dm_dl_v)])
     dbj_dmu = tf.add_n([tf.reduce_sum(gtp * btmu) for gtp, btmu in zip(grad_theta_phi, dbt_dmu_v)])
 
@@ -156,11 +156,14 @@ def asdm2(loss, lr=1.0, t0=10.0, delta=0.0005, c=1.0e8, lambda_min=0.5, lambda_m
                     lambda: eta_3 - tf.constant(delta) * dq_dl / tf.sqrt(e_dq_dl2_v),
                     lambda: eta_3)
     eta_1 = tf.cond(cond_neg_t0,
-                    lambda: tf.minimum(tf.maximum(-tf.log(tf.constant(1.0) - tf.constant(lambda_min)), eta_2),
-                                       -tf.log(tf.constant(1.0) - tf.constant(lambda_max))),
+                    lambda: tf.maximum(-tf.log(tf.constant(1.0) - tf.constant(lambda_min)), eta_2),
                     lambda: eta_2)
     lambd_1 = tf.cond(cond_neg_t0, lambda: tf.constant(1.0) - tf.exp(-eta_1), lambda: lambd_2)
-    nu = tf.cond(cond_neg_t0, lambda: nu_v - tf.constant(delta) * dbj_dmu / tf.sqrt(e_dbj_dmu2_v), lambda: nu_v)
+    nu_1 = tf.cond(cond_neg_t0, lambda: nu_v - tf.constant(delta) * dbj_dmu / tf.sqrt(e_dbj_dmu2_v), lambda: nu_v)
+    nu = tf.cond(cond_neg_t0,
+                 lambda: tf.minimum(tf.maximum(-tf.log(tf.constant(1.0) - tf.constant(nu_min)), nu_1),
+                                    -tf.log(tf.constant(1.0) - tf.constant(nu_max))),
+                 lambda: nu_1)
     mu = tf.cond(cond_neg_t0, lambda: tf.constant(1.0) - tf.exp(-nu), lambda: mu_v)
 
     cond_t = tf.greater(t_v, tf.constant(1.0))
