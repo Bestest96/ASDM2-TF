@@ -285,7 +285,7 @@ class ASDM2Optimizer(optimizer.Optimizer):
         assignments.append(state_ops.assign(self._get_non_slot_variable("mu", graph), mu))
         return assignments, alpha, beta, eta, lambd, mu, nu
 
-    def _calculate_t1_cond(self, alpha_val, beta_val, eta_val, lambda_val, s_dg_db, s_dg_dl, graph):
+    def _calculate_t1_cond_values(self, alpha_val, beta_val, eta_val, lambda_val, s_dg_db, s_dg_dl, graph):
         assignments = []
         t = self._get_non_slot_variable("t", graph)
         cond_t1 = math_ops.greater(t, array_ops.constant(1.0))
@@ -339,7 +339,7 @@ class ASDM2Optimizer(optimizer.Optimizer):
         assignments.append(state_ops.assign(self._get_non_slot_variable("gamma", graph), gamma))
         return assignments, beta, lambd, gamma
 
-    def _update_vars_and_estimators(self, scaled_g, beta, prev_lambd, lambd, gamma, mu, scaled_s_dg_db, scaled_s_dg_dl, \
+    def _update_vars_and_estimators(self, scaled_g, beta, prev_lambd, lambd, gamma, mu, scaled_s_dg_db, scaled_s_dg_dl,
                                     dq_db, dq_dl, dbj_dmu, graph):
         assignments = []
         t = self._get_non_slot_variable("t", graph)
@@ -441,7 +441,7 @@ class ASDM2Optimizer(optimizer.Optimizer):
                                [self.get_slot(v, "s_dt_dl") for v in self._vars])
         s_dg_db = self._scale_values(s_dg_db_ns, scaler)
         s_dg_dl = self._scale_values(s_dg_dl_ns, scaler)
-        t1_assignments, beta, lambd, gamma = self._calculate_t1_cond(alpha, beta, eta, lambd, s_dg_db, s_dg_dl, graph)
+        t1_assignments, beta, lambd, gamma = self._calculate_t1_cond_values(alpha, beta, eta, lambd, s_dg_db, s_dg_dl, graph)
         assignments.extend(t1_assignments)
         update_assignments = self._update_vars_and_estimators(scaled_grad, beta, prev_lambd, lambd, gamma, mu,
                                                               s_dg_db, s_dg_dl, dq_db, dq_dl, dbj_dmu, graph)
