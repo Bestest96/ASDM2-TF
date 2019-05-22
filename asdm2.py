@@ -1,3 +1,4 @@
+"""ASDM2 Optimizer for TensorFlow"""
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
@@ -17,7 +18,9 @@ from tensorflow.python.training import optimizer
 
 
 class ASDM2Optimizer(optimizer.Optimizer):
-
+    """
+    Optimizer implementing the ASDM2 algorithm.
+    """
     def __init__(self,
                  beta=1.0,
                  t0=10.0,
@@ -32,6 +35,26 @@ class ASDM2Optimizer(optimizer.Optimizer):
                  use_ag=False,
                  use_locking=False,
                  name="ASDM2"):
+        """
+        Constructs a new ASDM2 optimizer object.
+
+        Default values are taken from the paper describing the algorithm.
+        :param beta: Initial value of the step size parameter.
+        :param t0: Value representing how long initial learning period will last.
+        :param delta: Value used to adjust logarithmic representations of step size,
+                      momentum decay factor and mu values.
+        :param c: Value dependant on representation of numbers defining how many times can one value be larger
+                  from another with their addition still being effective.
+        :param lambda_min: A minimum value of momentum decay factor.
+        :param mu_min: A minimum value of mu parameter.
+        :param mu_max: A maximum value of mu parameter.
+        :param eps: Value preventing from division by zero in gradient scaling.
+        :param use_grad_scaling: If True, gradient scaling will be used.
+        :param grad_scaler_decay: Gradient scaler decay value.
+        :param use_ag: If True, Accelerated Gradient version will be used, else Classic Momentum will be used
+        :param use_locking: If True, use locks for update operations
+        :param name: Optional name.
+        """
         super(ASDM2Optimizer, self).__init__(use_locking, name)
 
         self._beta = beta
@@ -64,6 +87,9 @@ class ASDM2Optimizer(optimizer.Optimizer):
         self._loss = None
         self._theta_phi_loss = None
 
+    """
+    Prepares tensors from immutable algorithm parameters. 
+    """
     def _prepare(self):
         self._t0_t = ops.convert_to_tensor(self._t0)
         self._delta_t = ops.convert_to_tensor(self._delta)
@@ -75,6 +101,9 @@ class ASDM2Optimizer(optimizer.Optimizer):
             self._eps_t = ops.convert_to_tensor(self._eps)
             self._grad_scaler_decay_t = ops.convert_to_tensor(self._grad_scaler_decay)
 
+    """
+    Creates slots for optimizer variables, colocates non slot variables with first variable. 
+    """
     def _create_slots(self, var_list):
         first_var = min(var_list, key=lambda x: x.name)
         alpha = float(np.log(self._beta))
@@ -141,31 +170,54 @@ class ASDM2Optimizer(optimizer.Optimizer):
             if self._use_grad_scaling:
                 self._get_or_make_slot_with_initializer(v, ones, v.shape, dtypes.float32, "av_g2", self._name)
 
+    """
+    Intercepts vars and grads as updates are made in :_finish() method. 
+    """
     def _apply_dense(self, grad, var):
         self._grads.append(grad)
         self._vars.append(var)
 
+    """
+    Intercepts vars and grads as updates are made in _finish() method. 
+    """
     def _apply_sparse(self, grad, var):
         self._grads.append(grad)
         self._vars.append(var)
 
+    """
+    Not implemented
+    """
     def _resource_apply_dense(self, grad, handle):
         pass
 
+    """
+    Not implemented
+    """
     def _resource_apply_sparse(self, grad, handle, indices):
         pass
 
+    """
+    Intercepts loss graph to use in _finish() method.
+    :return: minimize() of Optimizer base class. 
+    """
     def minimize(self, loss, global_step=None, var_list=None, gate_gradients=optimizer.Optimizer.GATE_OP,
                  aggregation_method=None, colocate_gradients_with_ops=False, name=None, grad_loss=None):
         self._loss = loss
         return super().minimize(loss, global_step, var_list, gate_gradients, aggregation_method,
                                 colocate_gradients_with_ops, name, grad_loss)
 
+    """
+    :return: Current graph.
+    """
     def _get_graph(self):
         if context.in_eager_mode():
             return None
         return ops.get_default_graph()
 
+    """
+    Duplicates loss graph with swapped variables.
+    :return: Swapped graph. 
+    """
     def _duplicate_graph(self, graph, vars_to_replace, name='Duplicated'):
         if graph in vars_to_replace:
             return vars_to_replace[graph]
@@ -186,11 +238,19 @@ class ASDM2Optimizer(optimizer.Optimizer):
             new_view, _ = graph_editor.copy_with_input_replacements(sgv, vars_to_replace)
             return new_view.outputs[sgv.output_index(graph)]
 
+    """
+    Calculates gradients for swapped variables.
+    :return: Gradient values for swapped variables and new loss graph from _duplicate_graph()
+    """
     def _get_gradient_other_vars(self, new_variables, loss):
         new_vars_dict = dict(zip([v.op.outputs[0] for v in self._vars], new_variables))
         new_loss = self._duplicate_graph(loss, new_vars_dict)
         return gradients.gradients(xs=new_variables, ys=new_loss, name="grad2"), new_loss
 
+    """
+    Updates gradient scaler value.
+    :return: Assignments of new scaler values and new scaler value. 
+    """
     def _update_scaler(self, graph):
         assignments = []
         scaler_values = []
@@ -206,12 +266,23 @@ class ASDM2Optimizer(optimizer.Optimizer):
             assignments.append(state_ops.assign(self.get_slot(v, "scaler"), scaler))
         return assignments, scaler_values
 
+    """
+    Scales values with scaler.
+    :return: Scaled values. 
+    """
     def _scale_values(self, values, scaler):
         return [v * s for v, s in zip(values, scaler)]
-
+    """
+    Calculates a hessian-vector product estimation with gradient calculated earlier. 
+    :return: An estimate of hessian-vector product. 
+    """
     def _hvp(self, grad, var, vec):
         return gradients.gradients([g * array_ops.stop_gradient(v) for g, v in zip(grad, vec)], [v for v in var])
 
+    """
+    Caclulates dQ/dB, dQ/dL and dJ/dmu sums. 
+    :return: Values of calculated sums. 
+    """
     def _get_sums(self, scaled_gtp):
         dq_db = math_ops.add_n([math_ops.reduce_sum(gtp * (self.get_slot(v, "s_dbt_db") + self.get_slot(v, "s_dm_db")))
                                 for gtp, v in zip(scaled_gtp, self._vars)])
@@ -220,7 +291,10 @@ class ASDM2Optimizer(optimizer.Optimizer):
         dbj_dmu = math_ops.add_n(
             [math_ops.reduce_sum(gtp * self.get_slot(v, "dbt_dmu")) for gtp, v in zip(scaled_gtp, self._vars)])
         return dq_db, dq_dl, dbj_dmu
-
+    """
+    Calculates values for t <= t0 condition part.
+    :return: Calculated values that are later needed in calculations.
+    """
     def _calculate_t0_cond_values(self, scaled_g, scaler, graph):
         t = self._get_non_slot_variable("t", graph)
         cond_t0 = math_ops.less_equal(t, self._t0_t)
@@ -249,6 +323,10 @@ class ASDM2Optimizer(optimizer.Optimizer):
                                     lambda: self._get_non_slot_variable("eta", graph))
         return alpha, beta, eta, lambd
 
+    """
+    Calculates values for t > t0 condition part.
+    :return: Assignments made and values that are later needed in calculations.
+    """
     def _calculate_neg_t0_cond_values(self, dq_db, dq_dl, dbj_dmu, alpha_val, beta_val, eta_val, lambda_val, graph):
         assignments = []
         t = self._get_non_slot_variable("t", graph)
@@ -286,6 +364,10 @@ class ASDM2Optimizer(optimizer.Optimizer):
         assignments.append(state_ops.assign(self._get_non_slot_variable("mu", graph), mu))
         return assignments, alpha, beta, eta, lambd, mu, nu
 
+    """
+    Calculates values for t > 1 condition part.
+    :return: Assignments made and values that are later needed in calculations.
+    """
     def _calculate_t1_cond_values(self, alpha_val, beta_val, eta_val, lambda_val, scaled_s_dg_db, scaled_s_dg_dl,
                                   graph):
         assignments = []
@@ -341,6 +423,10 @@ class ASDM2Optimizer(optimizer.Optimizer):
         assignments.append(state_ops.assign(self._get_non_slot_variable("gamma", graph), gamma))
         return assignments, beta, lambd, gamma
 
+    """
+    Updates variables and estimator values.
+    :return: Assignments of new values.
+    """
     def _update_vars_and_estimators(self, scaled_g, beta, prev_lambd, lambd, gamma, mu, scaled_s_dg_db, scaled_s_dg_dl,
                                     dq_db, dq_dl, dbj_dmu, graph):
         assignments = []
@@ -416,6 +502,10 @@ class ASDM2Optimizer(optimizer.Optimizer):
 
         return assignments
 
+    """
+    Does calculations defined in ASDM2 algorithm.
+    :return: All assignments of an algorithm.
+    """
     def _finish(self, _, name_scope):
         assignments = []
         graph = self._get_graph()
@@ -449,6 +539,4 @@ class ASDM2Optimizer(optimizer.Optimizer):
         update_assignments = self._update_vars_and_estimators(scaled_grad, beta, prev_lambd, lambd, gamma, mu,
                                                               s_dg_db, s_dg_dl, dq_db, dq_dl, dbj_dmu, graph)
         assignments.extend(update_assignments)
-        return control_flow_ops.group(assignments, name=name_scope), [beta, lambd, gamma,
-                                                                      array_ops.constant(1.0) - math_ops.exp(-nu),
-                                                                      self._loss, self._theta_phi_loss]
+        return control_flow_ops.group(assignments, name=name_scope)
