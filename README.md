@@ -1,5 +1,5 @@
 # ASDM2-TF
-An implementation of ASDM2 optimizer (Wawrzyński, 2019) in TensorFlow. 
+An implementation of ASDM2 optimizer in TensorFlow. 
 
 ## Description
 This repository contains a TensorFlow implementation of ASDM2 algorithm. It is defined
