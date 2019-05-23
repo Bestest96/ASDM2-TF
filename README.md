@@ -89,21 +89,21 @@ python main.py "HandwrittenDigitsMnist 10000000 10000 200 10 Adam(learning_rate=
 #### Miscellaneous
 For standard algorithms, their provided parameters are displayed (as they don't change).
 
-For ASDM2 however, values of beta, lambda, gamma, 1.0 - exp(-nu), loss 
-and bar_loss (for theta_bar) are displayed, averaged over reporting time. 
+For ASDM2, values of beta, lambda, gamma, 1.0 - exp(-nu), loss 
+and bar_loss (for theta_bar vars) are displayed, averaged over reporting time. 
 
 
 For demo purposes, ASDM2 has additional return values added to _finish() method, 
 representing reported values described above. 
 
 
-Datasets are taken from UCI Machine Learning Repository:
+Datasets are taken from:
 
 [CreditCardUci](https://archive.ics.uci.edu/ml/datasets/default+of+credit+card+clients)  
 [HandwrittenDigitsMnist](http://yann.lecun.com/exdb/mnist/)
 
 
-Handwritten digits are stored in zip archive and need to be extracted before usage. 
+Datasets were preprocessed and are available in [DataSets](/demo/DataSets) folder.
 
 
-Datasets were preprocessed and are available in [DataSets](/demo/DataSets) folder. 
+Handwritten digits are stored in zip archive and need to be extracted before usage.  
