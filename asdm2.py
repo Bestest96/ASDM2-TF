@@ -387,7 +387,7 @@ class ASDM2Optimizer(optimizer.Optimizer):
                                                                                      [math_ops.reduce_sum(
                                                                                          math_ops.square(sgl))
                                                                                          for sgl in scaled_s_dg_dl])))),
-                                       lambda: array_ops.constant(-float('Inf')))
+                                       lambda: array_ops.constant(float('Inf')))
         cond_a0 = math_ops.greater(alpha_val, alpha0)
         alpha = control_flow_ops.cond(math_ops.logical_and(cond_t1, cond_a0),
                                       lambda: alpha_val - array_ops.constant(2.0) * self._delta_t,
