@@ -107,3 +107,6 @@ Datasets were preprocessed and are available in [DataSets](/demo/DataSets) folde
 
 
 Handwritten digits are stored in zip archive and need to be extracted before usage.  
+
+
+Implemented and tested using Tensorflow 1.12.
