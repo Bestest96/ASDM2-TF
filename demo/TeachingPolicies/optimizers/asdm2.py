@@ -31,7 +31,7 @@ class ASDM2Optimizer(optimizer.Optimizer):
                  mu_max=0.9999,
                  eps=1.0e-8,
                  use_grad_scaling=False,
-                 grad_scaler_decay=0.999,
+                 rho=0.999,
                  use_ag=False,
                  use_locking=False,
                  name="ASDM2"):
@@ -69,7 +69,7 @@ class ASDM2Optimizer(optimizer.Optimizer):
         self._mu_max = mu_max
         self._eps = eps
         self._use_grad_scaling = use_grad_scaling
-        self._grad_scaler_decay = grad_scaler_decay
+        self._rho = rho
         self._use_ag = use_ag
 
         self._t0_t = None
@@ -78,9 +78,9 @@ class ASDM2Optimizer(optimizer.Optimizer):
         self._lambda_min_t = None
         self._mu_min_t = None
         self._mu_max_t = None
+        self._rho_t = None
         if self._use_grad_scaling:
             self._eps_t = None
-            self._grad_scaler_decay_t = None
 
         self._grads = []
         self._vars = []
@@ -99,9 +99,9 @@ class ASDM2Optimizer(optimizer.Optimizer):
         self._lambda_min_t = ops.convert_to_tensor(self._lambda_min)
         self._mu_min_t = ops.convert_to_tensor(self._mu_min)
         self._mu_max_t = ops.convert_to_tensor(self._mu_max)
+        self._rho_t = ops.convert_to_tensor(self._rho)
         if self._use_grad_scaling:
             self._eps_t = ops.convert_to_tensor(self._eps)
-            self._grad_scaler_decay_t = ops.convert_to_tensor(self._grad_scaler_decay)
 
     """
     Creates slots for optimizer variables, colocates non slot variables with first variable. 
@@ -253,13 +253,9 @@ class ASDM2Optimizer(optimizer.Optimizer):
     Updates gradient scaler value.
     :return: Assignments of new scaler values and new scaler value. 
     """
-    def _update_scaler(self, graph):
+    def _update_scaler(self, decay):
         assignments = []
         scaler_values = []
-        t = self._get_non_slot_variable("t", graph)
-        decay = self._grad_scaler_decay_t * \
-                (array_ops.constant(1.0) - math_ops.pow(self._grad_scaler_decay_t, t - array_ops.constant(1.0))) / \
-                (array_ops.constant(1.0) - math_ops.pow(self._grad_scaler_decay_t, t))
         for v, g in zip(self._vars, self._original_grad):
             av_g2 = decay * self.get_slot(v, "av_g2") + (array_ops.constant(1.0) - decay) * math_ops.square(g)
             scaler = math_ops.rsqrt(av_g2 + self._eps_t)
@@ -439,7 +435,7 @@ class ASDM2Optimizer(optimizer.Optimizer):
     :return: Assignments of new values.
     """
     def _update_vars_and_estimators(self, scaled_g, beta, prev_lambd, lambd, gamma, mu, scaled_s_dg_db, scaled_s_dg_dl,
-                                    dq_db, dq_dl, dbj_dmu, graph):
+                                    dq_db, dq_dl, dbj_dmu, w_t, graph):
         assignments = []
         t = self._get_non_slot_variable("t", graph)
         momentum_values = []
@@ -488,9 +484,6 @@ class ASDM2Optimizer(optimizer.Optimizer):
             assignments.append(state_ops.assign(self.get_slot(v, "phi"), phi))
             assignments.append(state_ops.assign(self.get_slot(v, "s_dt_db"), s_dt_db))
             assignments.append(state_ops.assign(self.get_slot(v, "s_dt_dl"), s_dt_dl))
-        w_t = array_ops.constant(0.999) * \
-              (array_ops.constant(1.0) - math_ops.pow(array_ops.constant(0.999), t - array_ops.constant(1.0))) / \
-              (array_ops.constant(1.0) - math_ops.pow(array_ops.constant(0.999), t))
         e_dq_db2 = w_t * self._get_non_slot_variable("e_dq_db2", graph) + \
                    (array_ops.constant(1.0) - w_t) * math_ops.square(dq_db)
         e_dq_dl2 = w_t * self._get_non_slot_variable("e_dq_dl2", graph) + \
@@ -526,8 +519,12 @@ class ASDM2Optimizer(optimizer.Optimizer):
                                          + prev_lambd * self.get_slot(v, "momentum"))
                                for v in self._vars]
         self._original_grad, self._original_loss = self._get_gradient_other_vars(self._original_vars)
+        t = self._get_non_slot_variable("t", graph)
+        decay = self._rho_t * \
+                (array_ops.constant(1.0) - math_ops.pow(self._rho_t, t - array_ops.constant(1.0))) / \
+                (array_ops.constant(1.0) - math_ops.pow(self._rho_t, t))
         if self._use_grad_scaling:
-            scaler_assignments, scaler = self._update_scaler(graph)
+            scaler_assignments, scaler = self._update_scaler(decay)
             assignments.extend(scaler_assignments)
         else:
             scaler = [self.get_slot(v, "scaler") for v in self._vars]
@@ -548,7 +545,7 @@ class ASDM2Optimizer(optimizer.Optimizer):
                                                                             graph)
         assignments.extend(t1_assignments)
         update_assignments = self._update_vars_and_estimators(scaled_grad, beta, prev_lambd, lambd, gamma, mu,
-                                                              s_dg_db, s_dg_dl, dq_db, dq_dl, dbj_dmu, graph)
+                                                              s_dg_db, s_dg_dl, dq_db, dq_dl, dbj_dmu, decay, graph)
         assignments.extend(update_assignments)
         return control_flow_ops.group(assignments, name=name_scope), [beta, lambd, gamma,
                                                                       array_ops.constant(1.0) - math_ops.exp(-nu),

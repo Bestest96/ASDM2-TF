@@ -13,7 +13,7 @@ class ASDM2TeachingPolicy(TeachingPolicy):
         "mu_min": 0.5,
         "mu_max": 0.9999,
         "eps": 1e-8,
-        "grad_scaler_decay": 0.999,
+        "rho": 0.999,
         "use_ag": 0,
         "use_grad_scaling": 0
     }
@@ -26,8 +26,7 @@ class ASDM2TeachingPolicy(TeachingPolicy):
         self.mu = None
         self.gamma = None
         self.nu = None
-        self.loss = None
-        self.theta_phi_loss = None
+        self.original_loss = None
 
     def optimizer(self, loss, **kwargs):
         return ASDM2Optimizer(beta=self.parameters["beta"],
@@ -39,8 +38,8 @@ class ASDM2TeachingPolicy(TeachingPolicy):
                               mu_max=self.parameters["mu_max"],
                               eps=self.parameters["eps"],
                               use_grad_scaling=bool(self.parameters["use_grad_scaling"]),
-                              grad_scaler_decay=self.parameters["grad_scaler_decay"],
+                              rho=self.parameters["rho"],
                               use_ag=bool(self.parameters["use_ag"])).minimize(loss)
 
     def get_info(self):
-        return [self.lr, self.mu, self.gamma, self.nu, self.loss, self.theta_phi_loss]
+        return [self.lr, self.mu, self.gamma, self.nu, self.original_loss]
