@@ -13,7 +13,7 @@ class ASDM2TeachingPolicy(TeachingPolicy):
         "mu_min": 0.5,
         "mu_max": 0.9999,
         "eps": 1e-8,
-        "rho": 0.999,
+        "grad_scaler_decay": 0.999,
         "use_ag": 0,
         "use_grad_scaling": 0
     }
@@ -39,7 +39,7 @@ class ASDM2TeachingPolicy(TeachingPolicy):
                               mu_max=self.parameters["mu_max"],
                               eps=self.parameters["eps"],
                               use_grad_scaling=bool(self.parameters["use_grad_scaling"]),
-                              rho=self.parameters["rho"],
+                              grad_scaler_decay=self.parameters["grad_scaler_decay"],
                               use_ag=bool(self.parameters["use_ag"])).minimize(loss)
 
     def get_info(self):
