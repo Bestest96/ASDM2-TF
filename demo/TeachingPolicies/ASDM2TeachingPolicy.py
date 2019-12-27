@@ -10,8 +10,6 @@ class ASDM2TeachingPolicy(TeachingPolicy):
         "delta": 0.0005,
         "c": 1.0e8,
         "lambda_min": 0.5,
-        "mu_min": 0.5,
-        "mu_max": 0.9999,
         "eps": 1e-8,
         "rho": 0.999,
         "use_ag": 0,
@@ -34,11 +32,9 @@ class ASDM2TeachingPolicy(TeachingPolicy):
                               delta=self.parameters["delta"],
                               c=self.parameters["c"],
                               lambda_min=self.parameters["lambda_min"],
-                              mu_min=self.parameters["mu_min"],
-                              mu_max=self.parameters["mu_max"],
                               eps=self.parameters["eps"],
-                              use_grad_scaling=bool(self.parameters["use_grad_scaling"]),
                               rho=self.parameters["rho"],
+                              use_grad_scaling=bool(self.parameters["use_grad_scaling"]),
                               use_ag=bool(self.parameters["use_ag"])).minimize(loss)
 
     def get_info(self):
