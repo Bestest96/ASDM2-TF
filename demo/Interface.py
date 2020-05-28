@@ -37,14 +37,14 @@ class Description:
 
 
 def print_help():
-    print("Usage: python main.py \"[problemDescriptionList] [iterationCount] [reportLength] "
+    print("Usage: python main.py \"[problemDescriptionList] [samplesCount] [reportLength] "
           "[minibatchLength] [runCount] [testRunDescriptionList] [ID]\" [arguments]\n\n"
           "problemDescriptionList: [problemDescription1,problemDescription2,...]\t\t\n"
           "\tproblemDescription: [problemName]\n"
-          "iterationCount:\t\tinteger > 0 number of teaching algorithm iterations\n"
+          "samplesCount:\t\tinteger > 0 number of data samples to be used in learning process\n"
           "reportLength:\t\tinteger > 0 number of samples after which reporting happens\n"
-          "minibatchLength:\tinteger > 0 the size of a minibatch\n"
-          "runCount:\t\tinteger > 0 number of runs of one experiment - results will be averaged\n"
+          "minibatchLength:\tinteger > 0 the size of a mini-batch\n"
+          "runCount:\t\tinteger > 0 number of runs of one experiment\n"
           "testRunDescriptionList:\t[testRunDescription1,testRunDescription2,...]\n"
           "\ttestRunDescription: [algorithmName](parameterName1=value1,parameterName2=value2,...). "
           "(...) part is optional, not specified parameters will be set to default values\n"
