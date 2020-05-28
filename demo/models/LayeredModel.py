@@ -1,4 +1,5 @@
 import tensorflow as tf
+
 from models.Model import Model
 
 

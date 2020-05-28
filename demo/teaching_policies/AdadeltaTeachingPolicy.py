@@ -1,5 +1,6 @@
-from TeachingPolicies.TeachingPolicy import TeachingPolicy
 import tensorflow as tf
+
+from teaching_policies.TeachingPolicy import TeachingPolicy
 
 
 class AdadeltaTeachingPolicy(TeachingPolicy):

@@ -1,8 +1,9 @@
-import tensorflow as tf
-from models.DenseLayer import DenseLayer
-from models.Model import ModelParams, ModelBuildingError
-from models.LayeredModel import LayeredModel
 import numpy as np
+import tensorflow as tf
+
+from models.DenseLayer import DenseLayer
+from models.LayeredModel import LayeredModel
+from models.Model import ModelParams, ModelBuildingError
 
 
 class PerceptronParams(ModelParams):

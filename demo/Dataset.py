@@ -1,5 +1,6 @@
-import numpy as np
 from random import shuffle, sample
+
+import numpy as np
 
 
 class Dataset:

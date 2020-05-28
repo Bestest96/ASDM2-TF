@@ -4,11 +4,10 @@ from __future__ import division
 from __future__ import print_function
 
 import numpy as np
-
 import tensorflow.contrib.graph_editor as graph_editor
 from tensorflow.python.eager import context
-from tensorflow.python.framework import ops
 from tensorflow.python.framework import dtypes
+from tensorflow.python.framework import ops
 from tensorflow.python.ops import array_ops
 from tensorflow.python.ops import control_flow_ops
 from tensorflow.python.ops import gradients
@@ -266,11 +265,7 @@ class ASDM2Optimizer(optimizer.Optimizer):
         Calculates a hessian-vector product estimation with gradient calculated earlier.
         :return: An estimate of hessian-vector product.
         """
-        max_vec = math_ops.maximum(math_ops.reduce_max([math_ops.reduce_max(math_ops.abs(v)) for v in vec]), 1e-24)
-        shifted_vars = [v + 1e-2 * vc / max_vec for v, vc in zip(var, vec)]
-        grad_shifted, loss_shifted = self._get_gradient_other_vars(shifted_vars)
-        return [(gp - g) / (1e-2 / max_vec)
-                for gp, g in zip(grad_shifted, grad)]
+        return gradients.gradients([g * array_ops.stop_gradient(v) for g, v in zip(grad, vec)], [v for v in var])
 
     def _get_sums(self, scaled_gtp):
         """

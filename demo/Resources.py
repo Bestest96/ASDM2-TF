@@ -1,5 +1,5 @@
-from TeachingPolicies.TeachingPolicy import TeachingPolicy
-from Problems.AprxSampler import AprxSampler
+from problems.AprxSampler import AprxSampler
+from teaching_policies.TeachingPolicy import TeachingPolicy
 
 
 class Resource:

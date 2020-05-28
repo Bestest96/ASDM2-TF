@@ -1,12 +1,10 @@
-from Problems.AprxSampler import AprxDataSetSampler
-
-from models.MLPerceptron import MLPerceptron
-from models.MLPerceptron import one_layer_perceptron_params, autoencoder_params
+import tensorflow as tf
 
 import error_operators as errors
-import activations as activations
-
+from models.MLPerceptron import MLPerceptron
+from models.MLPerceptron import one_layer_perceptron_params, autoencoder_params
 from normalization import z_score_normalization_op, scale_normalization_op
+from problems.AprxSampler import AprxDataSetSampler
 
 
 class AprxCreditCardUci(AprxDataSetSampler):
@@ -45,4 +43,4 @@ class AprxHandwrittenDigitsMnistBin(AprxDataSetSampler):
 
     def set_model_params(self):
         return autoencoder_params([1000, 500, 250, 30, 250, 500, 1000],
-                                  output_activation=activations.sigmoid)
+                                  output_activation=tf.nn.sigmoid)

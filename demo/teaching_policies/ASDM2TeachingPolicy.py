@@ -1,5 +1,5 @@
-from TeachingPolicies.TeachingPolicy import TeachingPolicy
-from TeachingPolicies.optimizers.asdm2 import ASDM2Optimizer
+from teaching_policies.TeachingPolicy import TeachingPolicy
+from teaching_policies.optimizers.asdm2 import ASDM2Optimizer
 
 
 class ASDM2TeachingPolicy(TeachingPolicy):

@@ -1,6 +1,8 @@
-import os
-import numpy as np
 import array
+import os
+
+import numpy as np
+
 from Preprocessor import Preprocessor, ClassificationPreprocessor, AutoencoderPreprocessor
 
 preprocessors = {

@@ -1,5 +1,6 @@
-from models.Layer import ModelParams, Layer
 import tensorflow as tf
+
+from models.Layer import ModelParams, Layer
 
 
 class DenseLayer(Layer):

@@ -1,6 +1,7 @@
-from file_readers import read_file
 import copy
+
 from error_operators import error_opers_tuple, mean_square_error
+from file_readers import read_file
 
 
 class AprxSampler:
