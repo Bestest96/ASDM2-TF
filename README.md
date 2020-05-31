@@ -38,7 +38,7 @@ through conda.
 Assuming Your working directory is in [demo](/demo) folder, You can launch demo
 with command:
 ```
-python main.py "[problemDescriptionList] [iterationCount] [reportLength] [minibatchLength] [runCount] [testRunDescriptionList] [ID]" [optArguments]
+python main.py "[problemDescriptionList] [samplesCount] [reportLength] [minibatchLength] [runCount] [testRunDescriptionList] [ID]" [optArguments]
 ```
 where primary arguments are:
 
@@ -46,11 +46,11 @@ problemDescriptionList: \[problemDescription1,problemDescription2,...\]
 
 problemDescription: \[problemName\]
 	
-iterationCount: - integer > 0 - number of teaching algorithm iterations
+samplesCount: - integer > 0 - number of data samples to be used in learning process
 
 reportLength: - integer > 0 - number of samples after which reporting happens
 
-minibatchLength: - integer > 0 - the size of a minibatch
+minibatchLength: - integer > 0 - the size of a mini-batch
 
 runCount: - integer > 0 - number of runs of one experiment - results will be averaged
 
@@ -67,7 +67,7 @@ Problem description can be chosen from \[HandwrittenDigitsMnist, CreditCardUci\]
 Algorithm name can be chosen from \[CM, NAG, Adagrad, Adadelta, RMSProp, Adam, ASDM2\]
 
 All algorithms are provided by default params that can be changed
-by providing them in parentheses separated by semicolon. 
+by setting them in parentheses separated by semicolon. 
 
 Optional arguments:
 
@@ -89,8 +89,8 @@ python main.py "HandwrittenDigitsMnist 10000000 10000 200 10 Adam(learning_rate=
 #### Miscellaneous
 For standard algorithms, their provided parameters are displayed (as they don't change).
 
-For ASDM2, values of beta, lambda, gamma, 1.0 - exp(-nu), loss 
-and bar_loss (for theta_bar vars) are displayed, averaged over reporting time. 
+For ASDM2, values of loss, second error metric, beta, lambda, gamma, 1.0 - exp(-nu)
+and original_loss (for original theta vars) are displayed, averaged over reporting time. 
 
 
 For demo purposes, ASDM2 has additional return values added to _finish() method, 
