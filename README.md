@@ -71,7 +71,7 @@ by setting them in parentheses separated by semicolon.
 
 Optional arguments:
 
---allow-growth - Tell TensorFlow to take graphics card memory as needed (if using a GPU)
+--allow-growth - Tell TensorFlow to take graphics card memory as needed
 		
 --save-graph - Save computation graph that can be later displayed in TensorBoard
 		
