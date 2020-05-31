@@ -56,7 +56,7 @@ runCount: - integer > 0 - number of runs of one experiment - results will be ave
 
 testRunDescriptionList:	\[testRunDescription1,testRunDescription2,...\]
 
-testRunDescription: \[algorithmName\](parameterName1=value1,parameterName2=value2,...). (...) part is optional, not specified parameters will be set to default values
+testRunDescription: \[algorithmName\](parameterName1=value1;parameterName2=value2;...). (...) part is optional, not specified parameters will be set to default values
 
 ID: file identifier to which logs will be saved (as ID.log file)
 
