@@ -80,10 +80,8 @@ Optional arguments:
 #### Example launches
 ```
 python main.py "CreditCardUci 10000000 10000 200 10 ASDM2 cc_asdm2"
-python main.py "CreditCardUci 10000000 10000 100 1 ASDM2(use_ag=1) cc_asdm2_ag" # 1 will be converted to True
-python main.py "HandwrittenDigitsMnist 100000000 10000 200 10 ASDM2(use_ag=1;use_grad_scaling=1) hd_asdm2_ags" --allow-growth
-python main.py "HandwrittenDigitsMnist 10000000 10000 200 10 ASDM2(use_grad_scaling=1) hd_asdm2_s" --allow-growth
-python main.py "HandwrittenDigitsMnist 10000000 10000 200 10 Adam(learning_rate=0.01) hd_adam_0_01" --allow-growth
+python main.py "HandwrittenDigitsMnist 100000000 10000 200 10 ASDM2(use_grad_scaling=1) hd_asdm2_s" --allow-growth
+python main.py "HandwrittenDigitsMnist 100000000 10000 200 10 Adam(learning_rate=0.01) hd_adam_0_01" --allow-growth
 ```
 
 #### Miscellaneous
